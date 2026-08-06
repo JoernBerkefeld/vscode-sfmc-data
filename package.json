@@ -54,7 +54,7 @@
         "eslint-plugin-unicorn": "^64.0.0",
         "globals": "^17.4.0",
         "husky": "^9.1.7",
-        "lint-staged": "^17.0.5",
+        "lint-staged": "^17.3.0",
         "prettier": "^3.8.1",
         "sfmc-dataloader": "^2.7.0",
         "typescript": "^5.9.2",
