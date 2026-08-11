@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 const CHANNEL_NAME = 'SFMC Data Loader';
 
-let channel: vscode.OutputChannel | undefined;
+const state: { channel: vscode.OutputChannel | undefined } = { channel: undefined };
 
 /**
  * Creates the extension output channel and registers disposal on deactivate.
@@ -10,14 +10,14 @@ let channel: vscode.OutputChannel | undefined;
  * @returns {vscode.OutputChannel} the **SFMC Data Loader** output channel
  */
 export function registerSfmcDataOutput(context: vscode.ExtensionContext): vscode.OutputChannel {
-    channel = vscode.window.createOutputChannel(CHANNEL_NAME);
-    context.subscriptions.push(channel);
-    return channel;
+    state.channel = vscode.window.createOutputChannel(CHANNEL_NAME);
+    context.subscriptions.push(state.channel);
+    return state.channel;
 }
 
 export function getSfmcDataOutputChannel(): vscode.OutputChannel {
-    if (!channel) {
+    if (!state.channel) {
         throw new Error('SFMC Data output channel was not registered');
     }
-    return channel;
+    return state.channel;
 }

@@ -39,8 +39,10 @@ export function getBusinessUnits(mcdevrc: Mcdevrc, credential: string): string[]
  */
 export function getAllCredBus(mcdevrc: Mcdevrc): string[] {
     const result: string[] = [];
-    for (const cred of Object.keys(mcdevrc.credentials ?? {})) {
-        for (const bu of Object.keys(mcdevrc.credentials[cred]?.businessUnits ?? {})) {
+    const credentials = mcdevrc.credentials ?? {};
+    for (const [cred, credential] of Object.entries(credentials)) {
+        const businessUnits = Object.keys(credential?.businessUnits ?? {});
+        for (const bu of businessUnits) {
             result.push(`${cred}/${bu}`);
         }
     }

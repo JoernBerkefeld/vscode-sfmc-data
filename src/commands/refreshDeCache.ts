@@ -124,8 +124,8 @@ async function refreshDeCache(): Promise<void> {
                 try {
                     await fetchAndStoreDeCache(projectRoot, credential, bu);
                 } catch (ex) {
-                    const msg = ex instanceof Error ? ex.message : String(ex);
-                    errors.push(`${credential}/${bu}: ${msg}`);
+                    const message = ex instanceof Error ? ex.message : String(ex);
+                    errors.push(`${credential}/${bu}: ${message}`);
                 }
             }
         }

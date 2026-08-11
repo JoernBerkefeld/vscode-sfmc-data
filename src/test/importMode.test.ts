@@ -3,9 +3,7 @@ import assert from 'node:assert/strict';
 import type * as vscode from 'vscode';
 import { getImportWriteModeFromSettings } from '../importModeCore';
 
-function mockWorkspaceConfiguration(options: {
-    getImportMode?: string;
-}): vscode.WorkspaceConfiguration {
+function mockWorkspaceConfig(options: { getImportMode?: string }): vscode.WorkspaceConfiguration {
     return {
         get: (section: string) => {
             if (section === 'importMode') {
@@ -18,22 +16,22 @@ function mockWorkspaceConfiguration(options: {
 
 describe('getImportWriteModeFromSettings', () => {
     it('returns insert when importMode is set to insert', () => {
-        const cfg = mockWorkspaceConfiguration({ getImportMode: 'insert' });
-        assert.equal(getImportWriteModeFromSettings(cfg), 'insert');
+        const config = mockWorkspaceConfig({ getImportMode: 'insert' });
+        assert.equal(getImportWriteModeFromSettings(config), 'insert');
     });
 
     it('returns upsert when importMode is set to upsert', () => {
-        const cfg = mockWorkspaceConfiguration({ getImportMode: 'upsert' });
-        assert.equal(getImportWriteModeFromSettings(cfg), 'upsert');
+        const config = mockWorkspaceConfig({ getImportMode: 'upsert' });
+        assert.equal(getImportWriteModeFromSettings(config), 'upsert');
     });
 
     it('defaults to upsert when importMode is absent', () => {
-        const cfg = mockWorkspaceConfiguration({});
-        assert.equal(getImportWriteModeFromSettings(cfg), 'upsert');
+        const config = mockWorkspaceConfig({});
+        assert.equal(getImportWriteModeFromSettings(config), 'upsert');
     });
 
     it('defaults to upsert when importMode is an unrecognised value', () => {
-        const cfg = mockWorkspaceConfiguration({ getImportMode: 'bulk' });
-        assert.equal(getImportWriteModeFromSettings(cfg), 'upsert');
+        const config = mockWorkspaceConfig({ getImportMode: 'bulk' });
+        assert.equal(getImportWriteModeFromSettings(config), 'upsert');
     });
 });

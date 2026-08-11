@@ -47,20 +47,20 @@ describe('bundledMcdataScriptPath', () => {
 });
 
 describe('getWorkspaceBinMcdata', () => {
-    let tmp: string;
+    let temporary: string;
     before(() => {
-        tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-ws-'));
-        const binDir = path.join(tmp, 'node_modules', '.bin');
-        fs.mkdirSync(binDir, { recursive: true });
-        fs.writeFileSync(path.join(binDir, 'mcdata'), '#!/bin/sh\necho', { mode: 0o755 });
+        temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-ws-'));
+        const binDirectory = path.join(temporary, 'node_modules', '.bin');
+        fs.mkdirSync(binDirectory, { recursive: true });
+        fs.writeFileSync(path.join(binDirectory, 'mcdata'), '#!/bin/sh\necho', { mode: 0o755 });
     });
     after(() => {
-        fs.rmSync(tmp, { recursive: true, force: true });
+        fs.rmSync(temporary, { recursive: true, force: true });
     });
 
     it('finds unix-style shim', () => {
-        const found = getWorkspaceBinMcdata(tmp, { platform: 'linux' });
-        assert.equal(found, path.join(tmp, 'node_modules', '.bin', 'mcdata'));
+        const found = getWorkspaceBinMcdata(temporary, { platform: 'linux' });
+        assert.equal(found, path.join(temporary, 'node_modules', '.bin', 'mcdata'));
     });
 });
 
@@ -81,7 +81,7 @@ describe('buildMcdataShellPrefix', () => {
     it('custom source returns error when path is empty', () => {
         const r = buildMcdataShellPrefix({
             mcdataSource: 'custom',
-            customPath: '   ',
+            customPath: ' '.repeat(3),
             projectRoot: '/proj',
             extensionPath: '/ext',
         });
@@ -92,8 +92,8 @@ describe('buildMcdataShellPrefix', () => {
     });
 
     it('bundled source ignores a non-empty customPath and uses bundled script only', () => {
-        const ext = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-ext-'));
-        const script = path.join(ext, 'out', 'mcdata.bundled.cjs');
+        const extension = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-ext-'));
+        const script = path.join(extension, 'out', 'mcdata.bundled.cjs');
         fs.mkdirSync(path.dirname(script), { recursive: true });
         fs.writeFileSync(script, '');
         try {
@@ -102,7 +102,7 @@ describe('buildMcdataShellPrefix', () => {
                     mcdataSource: 'bundled',
                     customPath: String.raw`C:\Should\Not\Matter\mcdata.cmd`,
                     projectRoot: '/nonexistent-workspace',
-                    extensionPath: ext,
+                    extensionPath: extension,
                 },
                 {
                     platform: 'linux',
@@ -117,13 +117,13 @@ describe('buildMcdataShellPrefix', () => {
                 assert.equal(r.prefix, `node ${quoteShellToken(script)}`);
             }
         } finally {
-            fs.rmSync(ext, { recursive: true, force: true });
+            fs.rmSync(extension, { recursive: true, force: true });
         }
     });
 
     it('auto uses workspace bin when present and ignores customPath', () => {
-        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-bm-'));
-        const shim = path.join(tmp, 'node_modules', '.bin', 'mcdata');
+        const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-bm-'));
+        const shim = path.join(temporary, 'node_modules', '.bin', 'mcdata');
         fs.mkdirSync(path.dirname(shim), { recursive: true });
         fs.writeFileSync(shim, '');
         try {
@@ -131,7 +131,7 @@ describe('buildMcdataShellPrefix', () => {
                 {
                     mcdataSource: 'auto',
                     customPath: String.raw`C:\Ignored\mcdata.cmd`,
-                    projectRoot: tmp,
+                    projectRoot: temporary,
                     extensionPath: '/ext',
                 },
                 {
@@ -146,12 +146,12 @@ describe('buildMcdataShellPrefix', () => {
                 assert.equal(r.prefix, quoteShellToken(shim));
             }
         } finally {
-            fs.rmSync(tmp, { recursive: true, force: true });
+            fs.rmSync(temporary, { recursive: true, force: true });
         }
     });
 
     it('auto uses mcdata on PATH when workspace bin missing', () => {
-        let probed = false;
+        let isProbed = false;
         const r = buildMcdataShellPrefix(
             {
                 mcdataSource: 'auto',
@@ -163,12 +163,12 @@ describe('buildMcdataShellPrefix', () => {
                 platform: 'linux',
                 existsSync: () => false,
                 execSync: (() => {
-                    probed = true;
+                    isProbed = true;
                     return '';
                 }) as unknown as typeof nodeExecSync,
             }
         );
-        assert.ok(probed);
+        assert.ok(isProbed);
         assert.ok('prefix' in r);
         if ('prefix' in r) {
             assert.equal(r.prefix, 'mcdata');
@@ -176,8 +176,8 @@ describe('buildMcdataShellPrefix', () => {
     });
 
     it('auto falls back to bundled node script when PATH has no mcdata', () => {
-        const ext = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-ext-'));
-        const script = path.join(ext, 'out', 'mcdata.bundled.cjs');
+        const extension = fs.mkdtempSync(path.join(os.tmpdir(), 'sfmc-data-ext-'));
+        const script = path.join(extension, 'out', 'mcdata.bundled.cjs');
         fs.mkdirSync(path.dirname(script), { recursive: true });
         fs.writeFileSync(script, '');
         try {
@@ -186,7 +186,7 @@ describe('buildMcdataShellPrefix', () => {
                     mcdataSource: 'auto',
                     customPath: '',
                     projectRoot: '/nonexistent-workspace',
-                    extensionPath: ext,
+                    extensionPath: extension,
                 },
                 {
                     platform: 'linux',
@@ -201,7 +201,7 @@ describe('buildMcdataShellPrefix', () => {
                 assert.equal(r.prefix, `node ${quoteShellToken(script)}`);
             }
         } finally {
-            fs.rmSync(ext, { recursive: true, force: true });
+            fs.rmSync(extension, { recursive: true, force: true });
         }
     });
 

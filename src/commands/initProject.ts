@@ -121,15 +121,15 @@ async function initProject(context: vscode.ExtensionContext): Promise<void> {
         placeHolder: '1234567',
         ignoreFocusOut: true,
         validateInput: (v) => {
-            const n = Number.parseInt(v, 10);
-            return Number.isInteger(n) && n > 0 ? undefined : 'Enter a valid integer MID';
+            const n = Number(v);
+            return Number.isSafeInteger(n) && n > 0 ? undefined : 'Enter a valid integer MID';
         },
     });
     if (!enterpriseIdInput?.trim()) {
         return;
     }
 
-    const args = [
+    const arguments_ = [
         'init',
         '-p',
         projectRoot,
@@ -146,7 +146,7 @@ async function initProject(context: vscode.ExtensionContext): Promise<void> {
         '--yes',
     ];
 
-    await runMcdataWithProgress(context, projectRoot, args, {
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data - Initialize Project',
     });
 
@@ -157,8 +157,8 @@ async function initProject(context: vscode.ExtensionContext): Promise<void> {
             open
         );
         if (choice === open) {
-            const doc = await vscode.workspace.openTextDocument(mcdataRcPath);
-            await vscode.window.showTextDocument(doc);
+            const document = await vscode.workspace.openTextDocument(mcdataRcPath);
+            await vscode.window.showTextDocument(document);
         }
     }
 }

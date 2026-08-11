@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { findProjectRoot, readProjectConfig } from '../config';
 import { getCredentials, getBusinessUnits } from '../mcdevrcParser';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildCrossBuImportArgs } from '../argbuilder';
+import { buildCrossBuImportArguments } from '../argbuilder';
 import { promptOptionalClearBeforeImport } from '../importClearPrompts';
 import { resolveImportWriteMode } from '../importMode';
 import { resolveBackupBeforeImport } from '../importBackupPrompt';
@@ -36,31 +36,31 @@ async function importDECrossBU(context: vscode.ExtensionContext): Promise<void> 
         return;
     }
 
-    const srcCredential =
+    const sourceCredential =
         credentials.length === 1
             ? credentials[0]
             : await vscode.window.showQuickPick(credentials, {
                   title: 'SFMC Data — Import (Cross-BU) — Source credential',
                   placeHolder: 'Select source credential',
               });
-    if (!srcCredential) return;
+    if (!sourceCredential) return;
 
-    const srcBUs = getBusinessUnits(mcdevrc, srcCredential);
-    if (srcBUs.length === 0) {
+    const sourceBUs = getBusinessUnits(mcdevrc, sourceCredential);
+    if (sourceBUs.length === 0) {
         void vscode.window.showErrorMessage(
-            `No business units found for credential "${srcCredential}".`
+            `No business units found for credential "${sourceCredential}".`
         );
         return;
     }
 
-    const srcBU =
-        srcBUs.length === 1
-            ? srcBUs[0]
-            : await vscode.window.showQuickPick(srcBUs, {
+    const sourceBU =
+        sourceBUs.length === 1
+            ? sourceBUs[0]
+            : await vscode.window.showQuickPick(sourceBUs, {
                   title: 'SFMC Data — Import (Cross-BU) — Source BU',
                   placeHolder: 'Select source Business Unit',
               });
-    if (!srcBU) return;
+    if (!sourceBU) return;
 
     const tgtCredential =
         credentials.length === 1
@@ -103,28 +103,28 @@ async function importDECrossBU(context: vscode.ExtensionContext): Promise<void> 
         .map((k) => k.trim())
         .filter(Boolean);
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
 
-    const mode = await resolveImportWriteMode(cfg);
+    const mode = await resolveImportWriteMode(config);
     if (mode === undefined) return;
 
-    const backupBeforeImport = await resolveBackupBeforeImport(cfg);
+    const backupBeforeImport = await resolveBackupBeforeImport(config);
     if (backupBeforeImport === undefined) return;
 
     const clearChoice = await promptOptionalClearBeforeImport();
 
-    const args = buildCrossBuImportArgs({
-        fromCredBu: `${srcCredential}/${srcBU}`,
+    const arguments_ = buildCrossBuImportArguments({
+        fromCredBu: `${sourceCredential}/${sourceBU}`,
         toCredBus: selectedTargetBUs.map(({ label }) => `${tgtCredential}/${label}`),
         deKeys,
         mode,
         backupBeforeImport,
         clearBeforeImport: clearChoice.clearBeforeImport,
         acceptClearRisk: clearChoice.acceptClearRisk,
-        useGit,
+        useGit: isUseGit,
     });
-    await runMcdataWithProgress(context, projectRoot, args, {
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Import (Cross-BU)',
     });
 }

@@ -8,15 +8,23 @@ import path from 'node:path';
 import { parseExportBasename } from 'sfmc-dataloader';
 
 export type ParsedContextFile = {
-    /** Whether the file lives under `retrieve/` (definition) or `data/` (export). */
+    /**
+     * Whether the file lives under `retrieve/` (definition) or `data/` (export).
+     */
     type: 'retrieve' | 'data';
     cred: string;
     bu: string;
-    /** `"<cred>/<bu>"` convenience string for CLI flags. */
+    /**
+     * `"<cred>/<bu>"` convenience string for CLI flags.
+     */
     credBu: string;
-    /** DE customer key extracted from the filename. */
+    /**
+     * DE customer key extracted from the filename.
+     */
     deKey: string;
-    /** Absolute path to the file (used for `--file` args in data mode). */
+    /**
+     * Absolute path to the file (used for `--file` args in data mode).
+     */
     filePath: string;
 };
 
@@ -37,12 +45,12 @@ export function parseContextFilePath(
     filePath: string,
     projectRoot: string
 ): ParsedContextFile | undefined {
-    const rel = path.relative(projectRoot, filePath);
-    const parts = rel.split(path.sep);
+    const relative = path.relative(projectRoot, filePath);
+    const parts = relative.split(path.sep);
 
     // retrieve/<cred>/<bu>/dataExtension/<filename>
     if (parts.length === 5 && parts[0] === 'retrieve' && parts[3] === 'dataExtension') {
-        const deKey = parts[4].split('.')[0];
+        const deKey = parts[4].split('.', 1)[0];
         if (!deKey) return undefined;
         return {
             type: 'retrieve',

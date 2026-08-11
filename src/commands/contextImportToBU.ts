@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { findProjectRoot, readProjectConfig } from '../config';
 import { getAllCredBus } from '../mcdevrcParser';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildCrossBuImportArgs, buildFileToMultiBuImportArgs } from '../argbuilder';
-import { resolveContextFiles } from './contextUtils';
+import { buildCrossBuImportArguments, buildFileToMultiBuImportArguments } from '../argbuilder';
+import { resolveContextFiles } from './contextUtilities';
 import { promptOptionalClearBeforeImport } from '../importClearPrompts';
 import { resolveImportWriteMode } from '../importMode';
 import { resolveBackupBeforeImport } from '../importBackupPrompt';
@@ -45,7 +45,7 @@ async function contextImportToBU(
     const allCredBus = getAllCredBus(mcdevrc);
 
     const selectedTargets = await vscode.window.showQuickPick(
-        allCredBus.map((cb) => ({ label: cb, picked: false })),
+        allCredBus.map((callback) => ({ label: callback, picked: false })),
         {
             title: 'SFMC Data Loader — Import to BU...',
             placeHolder: 'Select one or more target Business Units',
@@ -56,34 +56,32 @@ async function contextImportToBU(
 
     const toCredBus = selectedTargets.map(({ label }) => label);
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
 
-    const mode = await resolveImportWriteMode(cfg);
+    const mode = await resolveImportWriteMode(config);
     if (mode === undefined) return;
 
-    const backupBeforeImport = await resolveBackupBeforeImport(cfg);
+    const backupBeforeImport = await resolveBackupBeforeImport(config);
     if (backupBeforeImport === undefined) return;
 
     const clearChoice = await promptOptionalClearBeforeImport();
 
+    let arguments_: string[];
     if (parsed[0].type === 'data') {
         const filePaths = parsed.map((f) => f.filePath);
-        const args = buildFileToMultiBuImportArgs({
+        arguments_ = buildFileToMultiBuImportArguments({
             filePaths,
             toCredBus,
             mode,
             backupBeforeImport,
             clearBeforeImport: clearChoice.clearBeforeImport,
             acceptClearRisk: clearChoice.acceptClearRisk,
-            useGit,
-        });
-        await runMcdataWithProgress(context, projectRoot, args, {
-            progressTitle: 'SFMC Data — Import to BU',
+            useGit: isUseGit,
         });
     } else {
         const deKeys = parsed.map((f) => f.deKey);
-        const args = buildCrossBuImportArgs({
+        arguments_ = buildCrossBuImportArguments({
             fromCredBu: credBu,
             toCredBus,
             deKeys,
@@ -91,10 +89,10 @@ async function contextImportToBU(
             backupBeforeImport,
             clearBeforeImport: clearChoice.clearBeforeImport,
             acceptClearRisk: clearChoice.acceptClearRisk,
-            useGit,
-        });
-        await runMcdataWithProgress(context, projectRoot, args, {
-            progressTitle: 'SFMC Data — Import to BU',
+            useGit: isUseGit,
         });
     }
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
+        progressTitle: 'SFMC Data — Import to BU',
+    });
 }

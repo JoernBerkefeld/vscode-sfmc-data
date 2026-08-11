@@ -6,14 +6,14 @@ import * as vscode from 'vscode';
  * - `"never"` → returns `false` without prompting
  * - `"prompt"` (default) → shows a QuickPick and returns the user's choice,
  *   or `undefined` when the user dismisses the prompt
- * @param cfg - workspace configuration scoped to `sfmcData`
+ * @param config - workspace configuration scoped to `sfmcData`
  * @returns {Promise.<boolean|undefined>} `true` to pass `--backup-before-import`, `false` to pass
  *   `--no-backup-before-import`, or `undefined` if the user dismissed
  */
 export async function resolveBackupBeforeImport(
-    cfg: vscode.WorkspaceConfiguration
+    config: vscode.WorkspaceConfiguration
 ): Promise<boolean | undefined> {
-    const setting = cfg.get<string>('backupBeforeImport') ?? 'prompt';
+    const setting = config.get<string>('backupBeforeImport') ?? 'prompt';
 
     if (setting === 'always') {
         return true;

@@ -12,9 +12,9 @@ export function resolveMcdataShellPrefix(
     context: vscode.ExtensionContext,
     projectRoot: string
 ): string | undefined {
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const mcdataSource = normalizeMcdataSource(cfg.get<string>('mcdataSource'));
-    const customPath = cfg.get<string>('mcdataPath');
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const mcdataSource = normalizeMcdataSource(config.get<string>('mcdataSource'));
+    const customPath = config.get<string>('mcdataPath');
     const result = buildMcdataShellPrefix({
         mcdataSource,
         customPath: customPath ?? '',

@@ -8,13 +8,13 @@ type ModePick = vscode.QuickPickItem & { mode: 'upsert' | 'insert' };
 /**
  * When `sfmcData.promptImportMode` is true, shows a QuickPick; otherwise uses {@link getImportWriteModeFromSettings}.
  * Returns `undefined` if the user dismisses the QuickPick.
- * @param cfg - VS Code workspace configuration (`sfmcData` section)
+ * @param config - VS Code workspace configuration (`sfmcData` section)
  * @returns {Promise<'upsert' | 'insert' | undefined>} chosen write mode, or undefined if cancelled
  */
 export async function resolveImportWriteMode(
-    cfg: vscode.WorkspaceConfiguration
+    config: vscode.WorkspaceConfiguration
 ): Promise<'upsert' | 'insert' | undefined> {
-    if (cfg.get<boolean>('promptImportMode') === true) {
+    if (config.get<boolean>('promptImportMode') === true) {
         const items: ModePick[] = [
             {
                 label: 'Upsert',
@@ -36,5 +36,5 @@ export async function resolveImportWriteMode(
         }
         return picked.mode;
     }
-    return getImportWriteModeFromSettings(cfg);
+    return getImportWriteModeFromSettings(config);
 }

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { findProjectRoot, readProjectConfig } from '../config';
 import { getCredentials, getBusinessUnits } from '../mcdevrcParser';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildMultiBuExportArgs } from '../argbuilder';
+import { buildMultiBuExportArguments } from '../argbuilder';
 
 export function registerExportMultiBUCommand(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
@@ -74,13 +74,18 @@ async function exportDEMultiBU(context: vscode.ExtensionContext): Promise<void> 
         .map((k) => k.trim())
         .filter(Boolean);
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const format = cfg.get<string>('defaultFormat') ?? 'csv';
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const format = config.get<string>('defaultFormat') ?? 'csv';
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
 
     const fromCredBus = selectedBUs.map(({ label }) => `${credential}/${label}`);
-    const args = buildMultiBuExportArgs({ fromCredBus, deKeys, format, useGit });
-    await runMcdataWithProgress(context, projectRoot, args, {
+    const arguments_ = buildMultiBuExportArguments({
+        fromCredBus,
+        deKeys,
+        format,
+        useGit: isUseGit,
+    });
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export (Multi-BU)',
     });
 }

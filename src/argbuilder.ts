@@ -9,12 +9,16 @@ export type ImportOptions = {
     mode: string;
     clearBeforeImport: boolean;
     acceptClearRisk: boolean;
-    /** true = pass --backup-before-import, false = pass --no-backup-before-import, undefined = omit flag */
+    /**
+     * true = pass --backup-before-import, false = pass --no-backup-before-import, undefined = omit flag
+     */
     backupBeforeImport?: boolean;
 };
 
 export type MultiBuExportOptions = {
-    /** `<credential>/<businessUnit>` tokens — maps to repeated `--from` flags */
+    /**
+     * `<credential>/<businessUnit>` tokens — maps to repeated `--from` flags
+     */
     fromCredBus: string[];
     deKeys: string[];
     format: string;
@@ -23,29 +27,41 @@ export type MultiBuExportOptions = {
 };
 
 export type FileToMultiBuImportOptions = {
-    /** Absolute file paths — maps to repeated `--file` flags */
+    /**
+     * Absolute file paths — maps to repeated `--file` flags
+     */
     filePaths: string[];
-    /** One or more target `<credential>/<businessUnit>` tokens — maps to repeated `--to` flags */
+    /**
+     * One or more target `<credential>/<businessUnit>` tokens — maps to repeated `--to` flags
+     */
     toCredBus: string[];
     mode: string;
     clearBeforeImport: boolean;
     acceptClearRisk: boolean;
     useGit?: boolean;
-    /** true = pass --backup-before-import, false = pass --no-backup-before-import, undefined = omit flag */
+    /**
+     * true = pass --backup-before-import, false = pass --no-backup-before-import, undefined = omit flag
+     */
     backupBeforeImport?: boolean;
 };
 
 export type CrossBuImportOptions = {
-    /** Single source `<credential>/<businessUnit>` — maps to `--from` */
+    /**
+     * Single source `<credential>/<businessUnit>` — maps to `--from`
+     */
     fromCredBu: string;
-    /** One or more target `<credential>/<businessUnit>` tokens — maps to repeated `--to` */
+    /**
+     * One or more target `<credential>/<businessUnit>` tokens — maps to repeated `--to`
+     */
     toCredBus: string[];
     deKeys: string[];
     mode: string;
     clearBeforeImport: boolean;
     acceptClearRisk: boolean;
     useGit?: boolean;
-    /** true = pass --backup-before-import, false = pass --no-backup-before-import, undefined = omit flag */
+    /**
+     * true = pass --backup-before-import, false = pass --no-backup-before-import, undefined = omit flag
+     */
     backupBeforeImport?: boolean;
 };
 
@@ -54,23 +70,23 @@ export type CrossBuImportOptions = {
  * @param credBu - `<credential>/<businessUnit>` token
  * @param deKeys - one or more DE customer keys
  * @param format - csv | tsv | json
- * @param useGit - when true, append `--git` for stable `*.mcdata.<ext>` filenames
+ * @param shouldUseGit - when true, append `--git` for stable `*.mcdata.<ext>` filenames
  * @returns {string[]} argv tokens for the mcdata subprocess
  */
-export function buildExportArgs(
+export function buildExportArguments(
     credBu: string,
     deKeys: string[],
     format: string,
-    useGit?: boolean
+    shouldUseGit?: boolean
 ): string[] {
-    const args: string[] = ['export', credBu, '--format', format];
-    if (useGit) {
-        args.push('--git');
+    const arguments_: string[] = ['export', credBu, '--format', format];
+    if (shouldUseGit) {
+        arguments_.push('--git');
     }
     for (const key of deKeys) {
-        args.push('--de', key);
+        arguments_.push('--de', key);
     }
-    return args;
+    return arguments_;
 }
 
 /**
@@ -78,36 +94,36 @@ export function buildExportArgs(
  * @param options - multi-BU export settings
  * @returns {string[]} argv tokens for the mcdata subprocess
  */
-export function buildMultiBuExportArgs(options: MultiBuExportOptions): string[] {
-    const args: string[] = ['export', '--format', options.format];
+export function buildMultiBuExportArguments(options: MultiBuExportOptions): string[] {
+    const arguments_: string[] = ['export', '--format', options.format];
     if (options.useGit) {
-        args.push('--git');
+        arguments_.push('--git');
     }
     for (const credBu of options.fromCredBus) {
-        args.push('--from', credBu);
+        arguments_.push('--from', credBu);
     }
     for (const key of options.deKeys) {
-        args.push('--de', key);
+        arguments_.push('--de', key);
     }
     if (options.jsonPretty) {
-        args.push('--json-pretty');
+        arguments_.push('--json-pretty');
     }
-    return args;
+    return arguments_;
 }
 
 /**
  * Appends `--backup-before-import` or `--no-backup-before-import` when the value is
  * explicitly `true` or `false`. When `undefined`, no flag is added (CLI falls back to
  * its TTY-interactive default).
- * @param args - argument array to mutate
+ * @param arguments_ - argument array to mutate
  * @param backupBeforeImport - true/false/undefined
  * @returns {void}
  */
-function pushBackupFlag(args: string[], backupBeforeImport: boolean | undefined): void {
+function pushBackupFlag(arguments_: string[], backupBeforeImport: boolean | undefined): void {
     if (backupBeforeImport === true) {
-        args.push('--backup-before-import');
+        arguments_.push('--backup-before-import');
     } else if (backupBeforeImport === false) {
-        args.push('--no-backup-before-import');
+        arguments_.push('--no-backup-before-import');
     }
 }
 
@@ -120,25 +136,25 @@ function pushBackupFlag(args: string[], backupBeforeImport: boolean | undefined)
  * @param options - file-to-multi-BU import settings
  * @returns {string[]} argv tokens for the mcdata subprocess
  */
-export function buildFileToMultiBuImportArgs(options: FileToMultiBuImportOptions): string[] {
-    const args: string[] = ['import', '--mode', options.mode];
-    pushBackupFlag(args, options.backupBeforeImport);
+export function buildFileToMultiBuImportArguments(options: FileToMultiBuImportOptions): string[] {
+    const arguments_: string[] = ['import', '--mode', options.mode];
+    pushBackupFlag(arguments_, options.backupBeforeImport);
     if (options.useGit) {
-        args.push('--git');
+        arguments_.push('--git');
     }
     for (const credBu of options.toCredBus) {
-        args.push('--to', credBu);
+        arguments_.push('--to', credBu);
     }
     for (const fp of options.filePaths) {
-        args.push('--file', fp);
+        arguments_.push('--file', fp);
     }
     if (options.clearBeforeImport) {
-        args.push('--clear-before-import');
+        arguments_.push('--clear-before-import');
     }
     if (options.acceptClearRisk) {
-        args.push('--i-accept-clear-data-risk');
+        arguments_.push('--i-accept-clear-data-risk');
     }
-    return args;
+    return arguments_;
 }
 
 /**
@@ -147,25 +163,25 @@ export function buildFileToMultiBuImportArgs(options: FileToMultiBuImportOptions
  * @param options - cross-BU import settings
  * @returns {string[]} argv tokens for the mcdata subprocess
  */
-export function buildCrossBuImportArgs(options: CrossBuImportOptions): string[] {
-    const args: string[] = ['import', '--from', options.fromCredBu, '--mode', options.mode];
-    pushBackupFlag(args, options.backupBeforeImport);
+export function buildCrossBuImportArguments(options: CrossBuImportOptions): string[] {
+    const arguments_: string[] = ['import', '--from', options.fromCredBu, '--mode', options.mode];
+    pushBackupFlag(arguments_, options.backupBeforeImport);
     if (options.useGit) {
-        args.push('--git');
+        arguments_.push('--git');
     }
     for (const credBu of options.toCredBus) {
-        args.push('--to', credBu);
+        arguments_.push('--to', credBu);
     }
     for (const key of options.deKeys) {
-        args.push('--de', key);
+        arguments_.push('--de', key);
     }
     if (options.clearBeforeImport) {
-        args.push('--clear-before-import');
+        arguments_.push('--clear-before-import');
     }
     if (options.acceptClearRisk) {
-        args.push('--i-accept-clear-data-risk');
+        arguments_.push('--i-accept-clear-data-risk');
     }
-    return args;
+    return arguments_;
 }
 
 /**
@@ -176,39 +192,39 @@ export function buildCrossBuImportArgs(options: CrossBuImportOptions): string[] 
  * Import format is detected automatically by the CLI from the file extension.
  * @param credBu - `<credential>/<businessUnit>` token
  * @param options - import settings derived from VS Code settings and user input
- * @param useGit - when true, append `--git` for stable `*.mcdata.<ext>` filenames
+ * @param shouldUseGit - when true, append `--git` for stable `*.mcdata.<ext>` filenames
  * @returns {string[]} argv tokens for the mcdata subprocess
  */
-export function buildImportArgs(
+export function buildImportArguments(
     credBu: string,
     options: ImportOptions,
-    useGit?: boolean
+    shouldUseGit?: boolean
 ): string[] {
-    const args: string[] = ['import', credBu, '--mode', options.mode];
-    pushBackupFlag(args, options.backupBeforeImport);
-    if (useGit) {
-        args.push('--git');
+    const arguments_: string[] = ['import', credBu, '--mode', options.mode];
+    pushBackupFlag(arguments_, options.backupBeforeImport);
+    if (shouldUseGit) {
+        arguments_.push('--git');
     }
 
     if (options.deKeys) {
         for (const key of options.deKeys) {
-            args.push('--de', key);
+            arguments_.push('--de', key);
         }
     }
 
     if (options.filePaths) {
         for (const fp of options.filePaths) {
-            args.push('--file', fp);
+            arguments_.push('--file', fp);
         }
     }
 
     if (options.clearBeforeImport) {
-        args.push('--clear-before-import');
+        arguments_.push('--clear-before-import');
     }
 
     if (options.acceptClearRisk) {
-        args.push('--i-accept-clear-data-risk');
+        arguments_.push('--i-accept-clear-data-risk');
     }
 
-    return args;
+    return arguments_;
 }

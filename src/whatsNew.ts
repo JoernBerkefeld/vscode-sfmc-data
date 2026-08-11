@@ -10,17 +10,19 @@ import { compareSemver, escapeHtml, markdownToHtml, parseChangelogEntry } from '
 
 export { compareSemver, markdownToHtml, parseChangelogEntry } from './whatsNewCore';
 
-/** Synced so users don't see duplicate prompts across machines (see VS Code globalState docs). */
+/**
+ * Synced so users don't see duplicate prompts across machines (see VS Code globalState docs).
+ */
 export const WHATS_NEW_VERSION_KEY = 'whatsNew.lastShownVersion';
 
 const PANEL_VIEW_TYPE = 'sfmcData.whatsNew';
 
-let panel: WebviewPanel | undefined;
+const state: { panel: WebviewPanel | undefined } = { panel: undefined };
 
 function getNonce(): string {
     let t = '';
     const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
+    for (let index = 0; index < 32; index++) {
         t += c.charAt(Math.floor(Math.random() * c.length));
     }
     return t;
@@ -113,26 +115,32 @@ export async function showWhatsNewPanel(
     const title = `What's New — ${extensionDisplayName} v${version}`;
     const nonce = getNonce();
 
-    if (panel) {
-        panel.title = title;
-        panel.webview.html = buildWhatsNewHtml(bodyHtml, title, nonce, panel.webview.cspSource);
-        panel.reveal(ViewColumn.Active);
+    if (state.panel) {
+        state.panel.title = title;
+        state.panel.webview.html = buildWhatsNewHtml(
+            bodyHtml,
+            title,
+            nonce,
+            state.panel.webview.cspSource
+        );
+        state.panel.reveal(ViewColumn.Active);
         return;
     }
 
-    panel = window.createWebviewPanel(PANEL_VIEW_TYPE, title, ViewColumn.Active, {
+    const panel = window.createWebviewPanel(PANEL_VIEW_TYPE, title, ViewColumn.Active, {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [Uri.file(context.extensionPath)],
     });
+    state.panel = panel;
     panel.webview.html = buildWhatsNewHtml(bodyHtml, title, nonce, panel.webview.cspSource);
-    panel.webview.onDidReceiveMessage((msg: { type?: string; url?: string }) => {
-        if (msg?.type === 'openExternal' && typeof msg.url === 'string') {
-            void env.openExternal(Uri.parse(msg.url));
+    panel.webview.onDidReceiveMessage((message: { type?: string; url?: string }) => {
+        if (message?.type === 'openExternal' && typeof message.url === 'string') {
+            void env.openExternal(Uri.parse(message.url));
         }
     });
     panel.onDidDispose(() => {
-        panel = undefined;
+        state.panel = undefined;
     });
 }
 
@@ -153,8 +161,8 @@ export async function checkAndShowWhatsNew(
         return;
     }
 
-    const msg = `What's new in ${extensionDisplayName} v${current}`;
-    const choice = await window.showInformationMessage(msg, "Show What's New", 'Later');
+    const message = `What's new in ${extensionDisplayName} v${current}`;
+    const choice = await window.showInformationMessage(message, "Show What's New", 'Later');
     if (choice === "Show What's New") {
         await showWhatsNewPanel(context, extensionDisplayName);
     }

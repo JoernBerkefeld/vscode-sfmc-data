@@ -16,13 +16,15 @@ export function getDeCacheForBu(credential: string, bu: string): DeItem[] | unde
 }
 
 export function setDeCacheBu(credential: string, bu: string, items: DeItem[]): void {
-    if (!deCache[credential]) {
+    if (!Object.hasOwn(deCache, credential)) {
         deCache[credential] = {};
     }
     deCache[credential][bu] = items;
 }
 
-/** Clears the entire in-memory DE cache (e.g. for tests). */
+/**
+ * Clears the entire in-memory DE cache (e.g. for tests).
+ */
 export function clearDeCache(): void {
     for (const k of Object.keys(deCache)) {
         delete deCache[k];

@@ -1,4 +1,6 @@
-/** Extension settings query for the Settings UI (publisher.name from package.json). */
+/**
+Extension settings query for the Settings UI (publisher.name from package.json).
+ */
 export const EXT_SETTINGS_QUERY = '@ext:joernberkefeld.sfmc-data';
 
 /**

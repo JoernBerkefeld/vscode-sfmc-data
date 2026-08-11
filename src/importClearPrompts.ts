@@ -9,8 +9,8 @@ export async function promptOptionalClearBeforeImport(): Promise<{
     clearBeforeImport: boolean;
     acceptClearRisk: boolean;
 }> {
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    if (!cfg.get<boolean>('promptClearBeforeImport')) {
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    if (!config.get<boolean>('promptClearBeforeImport')) {
         return { clearBeforeImport: false, acceptClearRisk: false };
     }
 

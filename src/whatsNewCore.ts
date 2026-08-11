@@ -9,14 +9,14 @@
  * @returns {number} negative if `a` sorts before `b`, zero if equal, positive if `a` sorts after `b`
  */
 export function compareSemver(a: string, b: string): number {
-    const pa = a.split('.').map((p) => Number.parseInt(p, 10) || 0);
-    const pb = b.split('.').map((p) => Number.parseInt(p, 10) || 0);
-    const len = Math.max(pa.length, pb.length);
-    for (let i = 0; i < len; i++) {
-        const da = pa[i] ?? 0;
-        const db = pb[i] ?? 0;
-        if (da > db) return 1;
-        if (da < db) return -1;
+    const pa = a.split('.').map((p) => Number(p) || 0);
+    const pb = b.split('.').map((p) => Number(p) || 0);
+    const length = Math.max(pa.length, pb.length);
+    for (let index = 0; index < length; index++) {
+        const da = pa[index] ?? 0;
+        const database = pb[index] ?? 0;
+        if (da > database) return 1;
+        if (da < database) return -1;
     }
     return 0;
 }
@@ -36,8 +36,8 @@ export function parseChangelogEntry(changelog: string, version: string): string 
     }
     const start = match.index + match[0].length;
     const rest = changelog.slice(start);
-    const nextIdx = rest.search(/^## \[/m);
-    const body = nextIdx === -1 ? rest : rest.slice(0, nextIdx);
+    const nextIndex = rest.search(/^## \[/m);
+    const body = nextIndex === -1 ? rest : rest.slice(0, nextIndex);
     return body.trim();
 }
 
@@ -102,13 +102,15 @@ export function renderInlineRaw(raw: string): string {
 function renderMarkdownChunk(chunk: string): string {
     const lines = chunk.split(/\r?\n/);
     const out: string[] = [];
-    let inUl = false;
+    let isInUl = false;
 
     const closeUl = () => {
-        if (inUl) {
-            out.push('</ul>');
-            inUl = false;
+        if (!isInUl) {
+            return;
         }
+
+        out.push('</ul>');
+        isInUl = false;
     };
 
     for (const line of lines) {
@@ -126,9 +128,9 @@ function renderMarkdownChunk(chunk: string): string {
         }
         const bullet = line.match(/^\s*-\s+(.+)$/);
         if (bullet) {
-            if (!inUl) {
+            if (!isInUl) {
                 out.push('<ul>');
-                inUl = true;
+                isInUl = true;
             }
             out.push(`<li>${renderInlineRaw(bullet[1]!.trim())}</li>`);
             continue;

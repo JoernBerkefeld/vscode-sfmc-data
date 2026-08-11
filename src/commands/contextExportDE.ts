@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { findProjectRoot } from '../config';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildExportArgs } from '../argbuilder';
-import { resolveContextFiles } from './contextUtils';
+import { buildExportArguments } from '../argbuilder';
+import { resolveContextFiles } from './contextUtilities';
 
 export function registerContextExportCommand(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
@@ -30,13 +30,13 @@ async function contextExportDE(
     if (!files) return;
     const { parsed, credBu } = files;
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const format = cfg.get<string>('defaultFormat') ?? 'csv';
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const format = config.get<string>('defaultFormat') ?? 'csv';
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
     const deKeys = parsed.map((f) => f.deKey);
 
-    const args = buildExportArgs(credBu, deKeys, format, useGit);
-    await runMcdataWithProgress(context, projectRoot, args, {
+    const arguments_ = buildExportArguments(credBu, deKeys, format, isUseGit);
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export',
     });
 }

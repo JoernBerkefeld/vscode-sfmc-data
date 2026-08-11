@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { findProjectRoot, readProjectConfig } from '../config';
 import { getAllCredBus } from '../mcdevrcParser';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildMultiBuExportArgs } from '../argbuilder';
-import { resolveContextFiles } from './contextUtils';
+import { buildMultiBuExportArguments } from '../argbuilder';
+import { resolveContextFiles } from './contextUtilities';
 
 export function registerContextExportFromBUsCommand(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
@@ -42,7 +42,7 @@ async function contextExportFromBUs(
     const allCredBus = getAllCredBus(mcdevrc);
 
     const selectedSources = await vscode.window.showQuickPick(
-        allCredBus.map((cb) => ({ label: cb, picked: cb === credBu })),
+        allCredBus.map((callback) => ({ label: callback, picked: callback === credBu })),
         {
             title: 'SFMC Data Loader — Export from BUs...',
             placeHolder: 'Select one or more source Business Units to export from',
@@ -54,12 +54,17 @@ async function contextExportFromBUs(
     const fromCredBus = selectedSources.map(({ label }) => label);
     const deKeys = parsed.map((f) => f.deKey);
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const format = cfg.get<string>('defaultFormat') ?? 'csv';
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const format = config.get<string>('defaultFormat') ?? 'csv';
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
 
-    const args = buildMultiBuExportArgs({ fromCredBus, deKeys, format, useGit });
-    await runMcdataWithProgress(context, projectRoot, args, {
+    const arguments_ = buildMultiBuExportArguments({
+        fromCredBus,
+        deKeys,
+        format,
+        useGit: isUseGit,
+    });
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export from BUs',
     });
 }

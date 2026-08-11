@@ -2,14 +2,17 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 
-/** Optional overrides for unit tests. */
-export type McdataResolveDeps = {
+/**
+ * Optional overrides for unit tests.
+ */
+export type McdataResolveDependencies = {
     existsSync?: typeof fs.existsSync;
     execSync?: typeof execSync;
     platform?: NodeJS.Platform;
 };
 
-const plat = (deps?: McdataResolveDeps) => deps?.platform ?? process.platform;
+const plat = (dependencies?: McdataResolveDependencies) =>
+    dependencies?.platform ?? process.platform;
 
 /**
  * Quote a single shell token if it contains whitespace or quotes.
@@ -25,21 +28,21 @@ export function quoteShellToken(token: string): string {
 
 export function getWorkspaceBinMcdata(
     projectRoot: string,
-    deps?: McdataResolveDeps
+    dependencies?: McdataResolveDependencies
 ): string | undefined {
-    const exists = deps?.existsSync ?? fs.existsSync;
-    const binDir = path.join(projectRoot, 'node_modules', '.bin');
-    if (plat(deps) === 'win32') {
-        const cmd = path.join(binDir, 'mcdata.cmd');
-        if (exists(cmd)) {
-            return cmd;
+    const exists = dependencies?.existsSync ?? fs.existsSync;
+    const binDirectory = path.join(projectRoot, 'node_modules', '.bin');
+    if (plat(dependencies) === 'win32') {
+        const command = path.join(binDirectory, 'mcdata.cmd');
+        if (exists(command)) {
+            return command;
         }
-        const shim = path.join(binDir, 'mcdata');
+        const shim = path.join(binDirectory, 'mcdata');
         if (exists(shim)) {
             return shim;
         }
     } else {
-        const shim = path.join(binDir, 'mcdata');
+        const shim = path.join(binDirectory, 'mcdata');
         if (exists(shim)) {
             return shim;
         }
@@ -47,10 +50,10 @@ export function getWorkspaceBinMcdata(
     return undefined;
 }
 
-export function mcdataExistsOnPath(deps?: McdataResolveDeps): boolean {
-    const run = deps?.execSync ?? execSync;
+export function isMcdataOnPath(dependencies?: McdataResolveDependencies): boolean {
+    const run = dependencies?.execSync ?? execSync;
     try {
-        if (plat(deps) === 'win32') {
+        if (plat(dependencies) === 'win32') {
             run('where.exe mcdata', { stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
         } else {
             run('command -v mcdata', { stdio: ['ignore', 'pipe', 'ignore'], shell: '/bin/sh' });
@@ -65,7 +68,9 @@ export function bundledMcdataScriptPath(extensionPath: string): string {
     return path.join(extensionPath, 'out', 'mcdata.bundled.cjs');
 }
 
-/** How the extension resolves the `mcdata` executable when spawning the CLI. */
+/**
+ * How the extension resolves the `mcdata` executable when spawning the CLI.
+ */
 export type McdataSource = 'bundled' | 'auto' | 'custom';
 
 const VALID_MCDATA_SOURCES: readonly McdataSource[] = ['bundled', 'auto', 'custom'];
@@ -84,9 +89,9 @@ export function normalizeMcdataSource(raw?: string): McdataSource {
 
 function bundledPrefixOrError(
     extensionPath: string,
-    deps?: McdataResolveDeps
+    dependencies?: McdataResolveDependencies
 ): { prefix: string } | { error: string } {
-    const exists = deps?.existsSync ?? fs.existsSync;
+    const exists = dependencies?.existsSync ?? fs.existsSync;
     const bundled = bundledMcdataScriptPath(extensionPath);
     if (!exists(bundled)) {
         return {
@@ -106,7 +111,7 @@ function bundledPrefixOrError(
  * @param options.customPath - executable path when `mcdataSource` is `custom` (may be empty)
  * @param options.projectRoot - workspace folder used to resolve `node_modules/.bin/mcdata`
  * @param options.extensionPath - extension install dir (bundled `mcdata.bundled.cjs`)
- * @param deps - optional overrides for `existsSync`, `execSync`, or `platform` (unit tests)
+ * @param dependencies - optional overrides for `existsSync`, `execSync`, or `platform` (unit tests)
  * @returns {{ prefix: string } | { error: string }} shell prefix or user-facing error message
  */
 export function buildMcdataShellPrefix(
@@ -116,7 +121,7 @@ export function buildMcdataShellPrefix(
         projectRoot: string;
         extensionPath: string;
     },
-    deps?: McdataResolveDeps
+    dependencies?: McdataResolveDependencies
 ): { prefix: string } | { error: string } {
     const source = options.mcdataSource;
 
@@ -131,18 +136,18 @@ export function buildMcdataShellPrefix(
     }
 
     if (source === 'bundled') {
-        return bundledPrefixOrError(options.extensionPath, deps);
+        return bundledPrefixOrError(options.extensionPath, dependencies);
     }
 
     // auto
-    const ws = getWorkspaceBinMcdata(options.projectRoot, deps);
+    const ws = getWorkspaceBinMcdata(options.projectRoot, dependencies);
     if (ws) {
         return { prefix: quoteShellToken(ws) };
     }
 
-    if (mcdataExistsOnPath(deps)) {
+    if (isMcdataOnPath(dependencies)) {
         return { prefix: 'mcdata' };
     }
 
-    return bundledPrefixOrError(options.extensionPath, deps);
+    return bundledPrefixOrError(options.extensionPath, dependencies);
 }

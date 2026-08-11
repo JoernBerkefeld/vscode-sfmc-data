@@ -1,11 +1,13 @@
 import { spawn } from 'node:child_process';
 import * as vscode from 'vscode';
-import { appendMcdataDebugArg } from './mcdataDebugArgs';
+import { appendMcdataDebugArgument } from './mcdataDebugArguments';
 import { resolveMcdataShellPrefix } from './mcdataPrefix';
 import { buildMcdataShellCommandLine } from './mcdataShellCommand';
 import { getSfmcDataOutputChannel } from './sfmcDataOutput';
 
-/** Matches SFMC DevTools command result notifications. */
+/**
+ * Matches SFMC DevTools command result notifications.
+ */
 const MORE_DETAILS = 'More Details';
 
 export type McdataRunOutcome =
@@ -20,7 +22,7 @@ export type McdataRunOutcome =
  * **More Details** (opens the output channel).
  * @param context - VS Code extension context (mcdata resolution + output channel)
  * @param projectRoot - absolute cwd for the mcdata subprocess
- * @param args - argv after the executable (subcommand and flags; `--debug` may be appended from settings)
+ * @param arguments_ - argv after the executable (subcommand and flags; `--debug` may be appended from settings)
  * @param options - notification UI options
  * @param options.progressTitle - title shown on the cancellable progress notification
  * @returns {Promise<void>}
@@ -28,7 +30,7 @@ export type McdataRunOutcome =
 export async function runMcdataWithProgress(
     context: vscode.ExtensionContext,
     projectRoot: string,
-    args: string[],
+    arguments_: string[],
     options: { progressTitle: string }
 ): Promise<void> {
     const prefix = resolveMcdataShellPrefix(context, projectRoot);
@@ -36,11 +38,11 @@ export async function runMcdataWithProgress(
         return;
     }
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const createDebugLog = cfg.get<boolean>('createDebugLog') === true;
-    const finalArgs = appendMcdataDebugArg(args, createDebugLog);
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const isCreateDebugLog = config.get<boolean>('createDebugLog') === true;
+    const finalArguments = appendMcdataDebugArgument(arguments_, isCreateDebugLog);
 
-    const commandLine = buildMcdataShellCommandLine(prefix, finalArgs);
+    const commandLine = buildMcdataShellCommandLine(prefix, finalArguments);
     const outputChannel = getSfmcDataOutputChannel();
 
     const outcome = await vscode.window.withProgress<McdataRunOutcome>(
@@ -106,7 +108,9 @@ export async function runMcdataWithProgress(
     }
 }
 
-/** Matches export (stdout) and import (stderr) batch lines from mcdata. */
+/**
+ * Matches export (stdout) and import (stderr) batch lines from mcdata.
+ */
 const BATCH_PROGRESS = /\b((?:Downloading|Uploading) batch \d+ of \d+)\b/;
 
 function createBatchProgressLineHandler(
@@ -134,10 +138,12 @@ function appendStreamLine(
 }
 
 function flushStreamBuffer(buffer: { value: string }, onLine: (line: string) => void): void {
-    if (buffer.value.length > 0) {
-        onLine(buffer.value);
-        buffer.value = '';
+    if (!(buffer.value.length > 0)) {
+        return;
     }
+
+    onLine(buffer.value);
+    buffer.value = '';
 }
 
 function executeMcdataShell(
@@ -158,39 +164,39 @@ function executeMcdataShell(
             child.kill();
         });
 
-        let settled = false;
+        let isSettled = false;
         const finish = (outcome: McdataRunOutcome): void => {
-            if (settled) {
+            if (isSettled) {
                 return;
             }
-            settled = true;
+            isSettled = true;
             cancellation.dispose();
             resolve(outcome);
         };
 
-        const stdoutBuf = { value: '' };
-        const stderrBuf = { value: '' };
+        const stdoutBuffer = { value: '' };
+        const stderrBuffer = { value: '' };
         const reportBatchFromLine = createBatchProgressLineHandler(progress);
 
         child.stdout?.on('data', (chunk: Buffer) => {
             const text = chunk.toString();
             channel.append(text);
-            appendStreamLine(chunk, stdoutBuf, reportBatchFromLine);
+            appendStreamLine(chunk, stdoutBuffer, reportBatchFromLine);
         });
         child.stderr?.on('data', (chunk: Buffer) => {
             const text = chunk.toString();
             channel.append(text);
-            appendStreamLine(chunk, stderrBuf, reportBatchFromLine);
+            appendStreamLine(chunk, stderrBuffer, reportBatchFromLine);
         });
 
-        child.on('error', (err: Error) => {
-            channel.appendLine(String(err));
-            finish({ status: 'spawn_error', message: err.message });
+        child.on('error', (error: Error) => {
+            channel.appendLine(String(error));
+            finish({ status: 'spawn_error', message: error.message });
         });
 
         child.on('close', (code: number | null) => {
-            flushStreamBuffer(stdoutBuf, reportBatchFromLine);
-            flushStreamBuffer(stderrBuf, reportBatchFromLine);
+            flushStreamBuffer(stdoutBuffer, reportBatchFromLine);
+            flushStreamBuffer(stderrBuffer, reportBatchFromLine);
             if (token.isCancellationRequested) {
                 channel.appendLine('');
                 channel.appendLine('Process cancelled by user.');

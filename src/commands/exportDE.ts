@@ -4,7 +4,7 @@ import { findProjectRoot, readProjectConfig } from '../config';
 import { getCredentials, getBusinessUnits } from '../mcdevrcParser';
 import { getDeCacheForBu, hasDeCacheForBu } from '../deCache';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildExportArgs } from '../argbuilder';
+import { buildExportArguments } from '../argbuilder';
 import { refreshDeCacheForBu } from './refreshDeCache';
 
 export function registerExportCommand(context: vscode.ExtensionContext): void {
@@ -20,8 +20,8 @@ function buildDePickItems(items: DeItem[]): DePickItem[] {
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     );
     return sorted.map((item) => {
-        const same = item.name === item.key;
-        const label = same ? item.name : `${item.name} (${item.key})`;
+        const isSame = item.name === item.key;
+        const label = isSame ? item.name : `${item.name} (${item.key})`;
         return {
             label,
             deKey: item.key,
@@ -120,8 +120,8 @@ async function exportDE(context: vscode.ExtensionContext): Promise<void> {
             try {
                 await refreshDeCacheForBu(projectRoot, credential, bu);
             } catch (ex) {
-                const msg = ex instanceof Error ? ex.message : String(ex);
-                void vscode.window.showErrorMessage(`Failed to refresh DE cache: ${msg}`);
+                const message = ex instanceof Error ? ex.message : String(ex);
+                void vscode.window.showErrorMessage(`Failed to refresh DE cache: ${message}`);
                 return;
             }
             cached = getDeCacheForBu(credential, bu);
@@ -142,12 +142,12 @@ async function exportDE(context: vscode.ExtensionContext): Promise<void> {
         deKeys = selected.map((s) => s.deKey);
     }
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const format = cfg.get<string>('defaultFormat') ?? 'csv';
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const format = config.get<string>('defaultFormat') ?? 'csv';
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
 
-    const args = buildExportArgs(`${credential}/${bu}`, deKeys, format, useGit);
-    await runMcdataWithProgress(context, projectRoot, args, {
+    const arguments_ = buildExportArguments(`${credential}/${bu}`, deKeys, format, isUseGit);
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export',
     });
 }

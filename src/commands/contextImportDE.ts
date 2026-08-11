@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { findProjectRoot } from '../config';
 import { runMcdataWithProgress } from '../runMcdata';
-import { buildImportArgs } from '../argbuilder';
-import { resolveContextFiles } from './contextUtils';
+import { buildImportArguments } from '../argbuilder';
+import { resolveContextFiles } from './contextUtilities';
 import { promptOptionalClearBeforeImport } from '../importClearPrompts';
 import { resolveImportWriteMode } from '../importMode';
 import { resolveBackupBeforeImport } from '../importBackupPrompt';
@@ -33,20 +33,21 @@ async function contextImportDE(
     if (!files) return;
     const { parsed, credBu } = files;
 
-    const cfg = vscode.workspace.getConfiguration('sfmcData');
-    const useGit = cfg.get<boolean>('useGitFilenames') === true;
+    const config = vscode.workspace.getConfiguration('sfmcData');
+    const isUseGit = config.get<boolean>('useGitFilenames') === true;
 
-    const mode = await resolveImportWriteMode(cfg);
+    const mode = await resolveImportWriteMode(config);
     if (mode === undefined) return;
 
-    const backupBeforeImport = await resolveBackupBeforeImport(cfg);
+    const backupBeforeImport = await resolveBackupBeforeImport(config);
     if (backupBeforeImport === undefined) return;
 
     const clearChoice = await promptOptionalClearBeforeImport();
 
+    let arguments_: string[];
     if (parsed[0].type === 'data') {
         const filePaths = parsed.map((f) => f.filePath);
-        const args = buildImportArgs(
+        arguments_ = buildImportArguments(
             credBu,
             {
                 filePaths,
@@ -55,14 +56,11 @@ async function contextImportDE(
                 clearBeforeImport: clearChoice.clearBeforeImport,
                 acceptClearRisk: clearChoice.acceptClearRisk,
             },
-            useGit
+            isUseGit
         );
-        await runMcdataWithProgress(context, projectRoot, args, {
-            progressTitle: 'SFMC Data — Import',
-        });
     } else {
         const deKeys = parsed.map((f) => f.deKey);
-        const args = buildImportArgs(
+        arguments_ = buildImportArguments(
             credBu,
             {
                 deKeys,
@@ -71,10 +69,10 @@ async function contextImportDE(
                 clearBeforeImport: clearChoice.clearBeforeImport,
                 acceptClearRisk: clearChoice.acceptClearRisk,
             },
-            useGit
+            isUseGit
         );
-        await runMcdataWithProgress(context, projectRoot, args, {
-            progressTitle: 'SFMC Data — Import',
-        });
     }
+    await runMcdataWithProgress(context, projectRoot, arguments_, {
+        progressTitle: 'SFMC Data — Import',
+    });
 }
