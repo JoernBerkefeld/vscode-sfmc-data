@@ -52,4 +52,26 @@ describe('whatsNew', () => {
         assert.ok(html.includes('<a href="https://example.com/"'));
         assert.ok(html.includes('<strong>pkg</strong>'));
     });
+
+    it('markdownToHtml leaves unsafe-scheme links as literal text', () => {
+        const html = markdownToHtml('- [click](javascript:alert(1))\n');
+        assert.ok(!html.includes('<a '), 'must not create an anchor for javascript: URLs');
+        assert.ok(html.includes('[click]'), 'unsafe link should remain literal text');
+    });
+
+    it('markdownToHtml nests indented bullets into sub-lists', () => {
+        const html = markdownToHtml('- top\n  - child\n  - child2\n- top2\n');
+        // two <ul> opened (one nested), both closed
+        assert.strictEqual((html.match(/<ul>/g) ?? []).length, 2);
+        assert.strictEqual((html.match(/<\/ul>/g) ?? []).length, 2);
+        assert.ok(html.includes('<li>top</li>'));
+        assert.ok(html.includes('<li>child</li>'));
+        assert.ok(html.includes('<li>top2</li>'));
+    });
+
+    it('markdownToHtml handles two-level nesting and dedent', () => {
+        const html = markdownToHtml('- a\n  - b\n    - c\n- d\n');
+        assert.strictEqual((html.match(/<ul>/g) ?? []).length, 3);
+        assert.strictEqual((html.match(/<\/ul>/g) ?? []).length, 3);
+    });
 });

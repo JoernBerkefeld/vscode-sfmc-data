@@ -102,47 +102,54 @@ export function renderInlineRaw(raw: string): string {
 function renderMarkdownChunk(chunk: string): string {
     const lines = chunk.split(/\r?\n/);
     const out: string[] = [];
-    let isInUl = false;
+    // Indentation (in spaces) of each currently-open <ul>, outermost first.
+    const listIndents: number[] = [];
 
-    const closeUl = () => {
-        if (!isInUl) {
-            return;
+    const closeLists = (toDepth: number) => {
+        while (listIndents.length > toDepth) {
+            out.push('</ul>');
+            listIndents.pop();
         }
-
-        out.push('</ul>');
-        isInUl = false;
     };
 
     for (const line of lines) {
         const h3 = line.match(/^###\s+(.+)$/);
         if (h3) {
-            closeUl();
+            closeLists(0);
             out.push(`<h3>${renderInlineRaw(h3[1]!.trim())}</h3>`);
             continue;
         }
         const h2 = line.match(/^##\s+(.+)$/);
         if (h2) {
-            closeUl();
+            closeLists(0);
             out.push(`<h2>${renderInlineRaw(h2[1]!.trim())}</h2>`);
             continue;
         }
-        const bullet = line.match(/^\s*-\s+(.+)$/);
+        const bullet = line.match(/^(\s*)-\s+(.+)$/);
         if (bullet) {
-            if (!isInUl) {
+            const indent = bullet[1]!.replaceAll('\t', '  ').length;
+            // Open a deeper list only when this bullet is indented past the current level;
+            // close lists back to the matching level when it dedents.
+            if (listIndents.length === 0 || indent > listIndents.at(-1)!) {
                 out.push('<ul>');
-                isInUl = true;
+                listIndents.push(indent);
+            } else {
+                while (listIndents.length > 1 && indent < listIndents.at(-1)!) {
+                    out.push('</ul>');
+                    listIndents.pop();
+                }
             }
-            out.push(`<li>${renderInlineRaw(bullet[1]!.trim())}</li>`);
+            out.push(`<li>${renderInlineRaw(bullet[2]!.trim())}</li>`);
             continue;
         }
         if (line.trim() === '') {
-            closeUl();
+            closeLists(0);
             continue;
         }
-        closeUl();
+        closeLists(0);
         out.push(`<p>${renderInlineRaw(line.trim())}</p>`);
     }
-    closeUl();
+    closeLists(0);
     return out.join('');
 }
 
