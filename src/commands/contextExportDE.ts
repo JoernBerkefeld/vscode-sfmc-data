@@ -38,5 +38,6 @@ async function contextExportDE(
     const arguments_ = buildExportArguments(credBu, deKeys, format, isUseGit);
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export',
+        telemetryCommand: 'sfmc-data.contextExportDE',
     });
 }

@@ -66,5 +66,6 @@ async function contextExportFromBUs(
     });
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export from BUs',
+        telemetryCommand: 'sfmc-data.contextExportFromBUs',
     });
 }

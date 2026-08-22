@@ -1,3 +1,5 @@
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 import { checkAndShowWhatsNew, showWhatsNewPanel } from './whatsNew';
 import { registerExportCommand } from './commands/exportDE';
@@ -10,12 +12,32 @@ import { registerContextImportToBUCommand } from './commands/contextImportToBU';
 import { registerContextExportFromBUsCommand } from './commands/contextExportFromBUs';
 import { registerInitProjectCommand } from './commands/initProject';
 import { registerRefreshDeCacheCommand } from './commands/refreshDeCache';
+import { findProjectRoot } from './config';
+import { buildMcdataShellPrefix, normalizeMcdataSource, type McdataSource } from './mcdataResolve';
+import { buildMcdataShellCommandLine } from './mcdataShellCommand';
+import { getProjectFlags } from './projectFlags';
 import { registerSfmcDataOutput } from './sfmcDataOutput';
 import { registerMcdataStatusBar } from './statusBarMcdata';
+import { TelemetryReporter, detectEcosystem, getReporter, setReporter } from './telemetry';
+
+const execAsync = promisify(exec);
 
 const EXTENSION_DISPLAY_NAME = 'SFMC Data Loader';
+const EXTENSION_TELEMETRY_NAME = 'sfmc-data';
+const EXTENSION_ID = 'joernberkefeld.sfmc-data';
+const MCDATA_VERSION_TIMEOUT_MS = 8000;
+const MCDATA_VERSION_PATTERN = /\b(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/;
+
+const session = { hasTrackedMcdataVersion: false };
 
 export function activate(context: vscode.ExtensionContext): void {
+    const reporter = new TelemetryReporter({
+        extensionName: EXTENSION_TELEMETRY_NAME,
+        extensionVersion: context.extension.packageJSON.version,
+    });
+    context.subscriptions.push(reporter);
+    setReporter(reporter);
+
     registerSfmcDataOutput(context);
     registerMcdataStatusBar(context);
 
@@ -36,8 +58,94 @@ export function activate(context: vscode.ExtensionContext): void {
     registerContextImportCommand(context);
     registerContextImportToBUCommand(context);
     registerContextExportFromBUsCommand(context);
+
+    const mcdataSource = normalizeMcdataSource(
+        vscode.workspace.getConfiguration('sfmcData').get<string>('mcdataSource')
+    );
+    reporter.track('extension.activated', {
+        ...detectEcosystem(EXTENSION_ID),
+        ...getProjectFlags(vscode.workspace.workspaceFolders),
+        mcdataSource,
+    });
+    void trackMcdataVersionOnce(context, mcdataSource);
 }
 
-export function deactivate(): void {
-    // nothing to clean up
+export async function deactivate(): Promise<void> {
+    await getReporter()?.disposeAsync();
+    setReporter(undefined);
+}
+
+/**
+ * Emits `mcdata.version` once per session. Does not block activation.
+ * Uses `buildMcdataShellPrefix` (equivalent of `resolveMcdataShellPrefix`) so a
+ * failed lookup never toasts. Version is omitted on failure; paths are never sent.
+ * @param context - Extension context used to resolve the bundled CLI path.
+ * @param mcdataSource - Normalized `sfmcData.mcdataSource` already sent on activate.
+ */
+async function trackMcdataVersionOnce(
+    context: vscode.ExtensionContext,
+    mcdataSource: McdataSource
+): Promise<void> {
+    if (session.hasTrackedMcdataVersion) {
+        return;
+    }
+    session.hasTrackedMcdataVersion = true;
+
+    const properties: { mcdataSource: McdataSource; mcdataVersion?: string } = { mcdataSource };
+    const version = await lookupMcdataVersion(context, mcdataSource);
+    if (version) {
+        properties.mcdataVersion = version;
+    }
+    getReporter()?.track('mcdata.version', properties);
+}
+
+async function lookupMcdataVersion(
+    context: vscode.ExtensionContext,
+    mcdataSource: McdataSource
+): Promise<string | undefined> {
+    const projectRoot =
+        findProjectRoot(vscode.workspace.workspaceFolders) ??
+        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ??
+        context.extensionPath;
+    const customPath = vscode.workspace.getConfiguration('sfmcData').get<string>('mcdataPath');
+    const resolved = buildMcdataShellPrefix({
+        mcdataSource,
+        customPath: customPath ?? '',
+        projectRoot,
+        extensionPath: context.extensionPath,
+    });
+    if ('error' in resolved) {
+        return undefined;
+    }
+
+    try {
+        const commandLine = buildMcdataShellCommandLine(resolved.prefix, ['--version']);
+        const { stdout, stderr } = await execAsync(commandLine, {
+            cwd: projectRoot,
+            timeout: MCDATA_VERSION_TIMEOUT_MS,
+            windowsHide: true,
+            maxBuffer: 64 * 1024,
+        });
+        return parseMcdataVersion(stdout) ?? parseMcdataVersion(stderr);
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * Extracts a semver-like token so telemetry never includes a path or raw dump.
+ * @param output - stdout or stderr from `mcdata --version`.
+ * @returns {string | undefined} Version token, or undefined when none is found.
+ */
+function parseMcdataVersion(output: string): string | undefined {
+    const firstLine = output.trim().split(/\r?\n/, 1)[0]?.trim() ?? '';
+    if (!firstLine) {
+        return undefined;
+    }
+    const match = MCDATA_VERSION_PATTERN.exec(firstLine);
+    const version = match?.[1];
+    if (!version || version.length > 64) {
+        return undefined;
+    }
+    return version;
 }

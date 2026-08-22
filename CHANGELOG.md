@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0] — 2026-08-22
+
+### Added
+
+- **Anonymous usage telemetry (opt-out via VS Code).** Added a small custom telemetry reporter that sends anonymous, PII-free usage events (extension activation with co-installed-extension booleans, mcdev/mcdata project flags, and `mcdata` source; command success/failure; resolved `mcdata` version) to a PostHog project hosted in the EU. It is gated **solely** by VS Code's global `telemetry.telemetryLevel` setting — set it to `off` and nothing is sent. The full event catalogue ships as `telemetry.json`. See the new **Telemetry** section in the README.
+
+### Fixed
+
+- **What's New panel** — Nested changelog lists now render as nested lists instead of a single flat list.
+
+### Changed
+
+- Pre-commit now runs **lint-staged** (ESLint `--fix` on staged JS/TS) and a **registry-only lockfile** check so `file:` / `link:` / `workspace:` lockfile entries cannot be committed.
+
+### Dependencies
+
+- Refresh eslint, eslint-plugin-jsdoc, prettier, lint-staged, globals, esbuild, `@vscode/vsce`, `@types/node`, and typescript-eslint to latest compatible versions. Held `@types/vscode` and `engines.vscode` at the Cursor VS Code cap (`^1.101.0`).
+- Bump `eslint-plugin-unicorn` to `^73.0.0`.
+
 ## [1.1.0] — 2026-04-20
 
 ### Added

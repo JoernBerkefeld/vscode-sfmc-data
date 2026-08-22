@@ -26,6 +26,9 @@
         "src/sfmcDataOutput.ts",
         "src/sfmc-dataloader.d.ts",
         "src/whatsNewCore.ts",
+        "src/telemetry.ts",
+        "src/commandTelemetry.ts",
+        "src/projectFlags.ts",
         "src/test"
     ],
     "exclude": ["node_modules", "out"]

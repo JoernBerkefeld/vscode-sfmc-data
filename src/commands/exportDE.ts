@@ -149,5 +149,6 @@ async function exportDE(context: vscode.ExtensionContext): Promise<void> {
     const arguments_ = buildExportArguments(`${credential}/${bu}`, deKeys, format, isUseGit);
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export',
+        telemetryCommand: 'sfmc-data.exportDE',
     });
 }

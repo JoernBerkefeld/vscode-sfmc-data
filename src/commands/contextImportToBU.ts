@@ -94,5 +94,6 @@ async function contextImportToBU(
     }
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Import to BU',
+        telemetryCommand: 'sfmc-data.contextImportToBU',
     });
 }

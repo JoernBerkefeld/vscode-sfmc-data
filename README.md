@@ -80,6 +80,20 @@ The extension reads `.mcdevrc.json` (mcdev projects) or `.mcdatarc.json` (standa
 
 **DE cache (Refresh DE cache / Export from DE list):** the extension calls the `sfmc-dataloader` library in-process (`fetchDeList`) to retrieve Data Extension names and customer keys via the Marketing Cloud SOAP API. That path does **not** shell out to `mcdata`. All **import and export of row data** still goes through the `mcdata` CLI subprocess.
 
+## Telemetry
+
+This extension collects a small amount of **anonymous** usage telemetry to understand adoption and which commands are used, so development can be prioritised. It is sent to a [PostHog](https://posthog.com/) project hosted in the **EU** and contains **no** personally identifiable information, file contents, credentials, Data Extension keys, or business-unit / tenant identifiers.
+
+What is collected:
+
+- **Activation** — that the extension started, plus which known SFMC-related extensions are installed alongside it (booleans only), whether the workspace looks like an mcdev and/or mcdata project (folder-root flags only), and how `mcdata` is resolved (`bundled`, `auto`, or `custom`).
+- **Command outcomes** — whether a Command Palette or context-menu command succeeded or failed (the VS Code command id, duration on success, and a coarse error category on failure). Refresh DE cache is included the same way, with a count of business units processed.
+- **mcdata version** — the version string of the resolved `mcdata` used by the extension (omitted when the lookup fails).
+
+Events are keyed by VS Code's anonymous machine id only. The full catalogue ships as [`telemetry.json`](./telemetry.json) in the extension root.
+
+**Opt out:** telemetry is gated **solely** by VS Code's global telemetry setting. Set `telemetry.telemetryLevel` to `off` and nothing is sent — the extension respects `isTelemetryEnabled` and stops immediately when you change it. There is no separate extension setting to configure.
+
 ## Release Notes
 
 See [CHANGELOG.md](./CHANGELOG.md).

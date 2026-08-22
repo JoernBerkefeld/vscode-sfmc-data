@@ -15,3 +15,4 @@ package-lock.json
 node_modules/**
 !out/extension.js
 !out/mcdata.bundled.cjs
+!telemetry.json

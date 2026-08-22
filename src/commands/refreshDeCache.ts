@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { fetchDeList } from 'sfmc-dataloader';
+import { trackCommandOutcome } from '../commandTelemetry';
 import { findProjectRoot, readProjectConfig } from '../config';
-import { getBusinessUnits, getCredentials } from '../mcdevrcParser';
 import { setDeCacheBu } from '../deCache';
+import { getBusinessUnits, getCredentials } from '../mcdevrcParser';
+import { getReporter } from '../telemetry';
 
 /**
  * Fetch DE list for one credential/BU and store in extension cache.
@@ -105,6 +107,7 @@ async function refreshDeCache(): Promise<void> {
     }
 
     const errors: string[] = [];
+    const startedAt = Date.now();
 
     await vscode.window.withProgress(
         {
@@ -129,6 +132,14 @@ async function refreshDeCache(): Promise<void> {
                 }
             }
         }
+    );
+
+    const durationMs = Date.now() - startedAt;
+    trackCommandOutcome(
+        getReporter(),
+        'sfmc-data.refreshDeCache',
+        errors.length === 0 ? 'success' : 'commandFailed',
+        { durationMs, buCount: pickedBus.length }
     );
 
     if (errors.length > 0) {

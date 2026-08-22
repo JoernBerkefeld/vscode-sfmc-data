@@ -87,5 +87,6 @@ async function exportDEMultiBU(context: vscode.ExtensionContext): Promise<void> 
     });
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Export (Multi-BU)',
+        telemetryCommand: 'sfmc-data.exportDEMultiBU',
     });
 }

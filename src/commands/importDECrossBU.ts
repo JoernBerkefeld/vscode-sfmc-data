@@ -126,5 +126,6 @@ async function importDECrossBU(context: vscode.ExtensionContext): Promise<void> 
     });
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Import (Cross-BU)',
+        telemetryCommand: 'sfmc-data.importDECrossBU',
     });
 }

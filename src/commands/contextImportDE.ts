@@ -74,5 +74,6 @@ async function contextImportDE(
     }
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data — Import',
+        telemetryCommand: 'sfmc-data.contextImportDE',
     });
 }

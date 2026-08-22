@@ -140,6 +140,7 @@ async function importDE(context: vscode.ExtensionContext): Promise<void> {
         );
         await runMcdataWithProgress(context, projectRoot, arguments_, {
             progressTitle: 'SFMC Data — Import',
+            telemetryCommand: 'sfmc-data.importDE',
         });
     } else if (filePaths) {
         const arguments_ = buildImportArguments(
@@ -155,6 +156,7 @@ async function importDE(context: vscode.ExtensionContext): Promise<void> {
         );
         await runMcdataWithProgress(context, projectRoot, arguments_, {
             progressTitle: 'SFMC Data — Import',
+            telemetryCommand: 'sfmc-data.importDE',
         });
     }
 }

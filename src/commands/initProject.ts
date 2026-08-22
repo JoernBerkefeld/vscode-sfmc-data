@@ -148,6 +148,7 @@ async function initProject(context: vscode.ExtensionContext): Promise<void> {
 
     await runMcdataWithProgress(context, projectRoot, arguments_, {
         progressTitle: 'SFMC Data - Initialize Project',
+        telemetryCommand: 'sfmc-data.initProject',
     });
 
     if (fs.existsSync(mcdataRcPath)) {

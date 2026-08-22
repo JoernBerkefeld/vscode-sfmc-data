@@ -1,9 +1,11 @@
 import { spawn } from 'node:child_process';
 import * as vscode from 'vscode';
+import { mapMcdataRunStatus, trackCommandOutcome } from './commandTelemetry';
 import { appendMcdataDebugArgument } from './mcdataDebugArguments';
 import { resolveMcdataShellPrefix } from './mcdataPrefix';
 import { buildMcdataShellCommandLine } from './mcdataShellCommand';
 import { getSfmcDataOutputChannel } from './sfmcDataOutput';
+import { getReporter } from './telemetry';
 
 /**
  * Matches SFMC DevTools command result notifications.
@@ -23,18 +25,23 @@ export type McdataRunOutcome =
  * @param context - VS Code extension context (mcdata resolution + output channel)
  * @param projectRoot - absolute cwd for the mcdata subprocess
  * @param arguments_ - argv after the executable (subcommand and flags; `--debug` may be appended from settings)
- * @param options - notification UI options
+ * @param options - notification UI and telemetry options
  * @param options.progressTitle - title shown on the cancellable progress notification
+ * @param options.telemetryCommand - VS Code command id for command.executed / command.failed
  * @returns {Promise<void>}
  */
 export async function runMcdataWithProgress(
     context: vscode.ExtensionContext,
     projectRoot: string,
     arguments_: string[],
-    options: { progressTitle: string }
+    options: { progressTitle: string; telemetryCommand: string }
 ): Promise<void> {
+    const startedAt = Date.now();
     const prefix = resolveMcdataShellPrefix(context, projectRoot);
     if (prefix === undefined) {
+        trackCommandOutcome(getReporter(), options.telemetryCommand, 'spawnError', {
+            durationMs: Date.now() - startedAt,
+        });
         return;
     }
 
@@ -57,6 +64,13 @@ export async function runMcdataWithProgress(
             outputChannel.appendLine('');
             return executeMcdataShell(projectRoot, commandLine, outputChannel, token, progress);
         }
+    );
+
+    trackCommandOutcome(
+        getReporter(),
+        options.telemetryCommand,
+        mapMcdataRunStatus(outcome.status),
+        { durationMs: Date.now() - startedAt }
     );
 
     const openDetails = (): void => {

@@ -322,7 +322,7 @@
         "prepare": "husky || true",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "test": "node --test out/test/**/*.test.js"
+        "test": "node --require ./out/test/test/registerVscodeMock.js --test out/test/**/*.test.js && node ./scripts/validate-telemetry-catalog.mjs"
     },
     "lint-staged": {
         "*.{js,mjs,cjs,ts}": [
