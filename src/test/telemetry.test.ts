@@ -159,6 +159,8 @@ describe('TelemetryReporter', () => {
             reporter.track('command.failed', {
                 command: 'sfmc-data.exportDE',
                 errorCategory: 'commandFailed',
+                errorName: 'Error',
+                errorCode: 'ENOENT',
                 buCount: 1,
             });
             await reporter.flush();

@@ -107,6 +107,7 @@ async function refreshDeCache(): Promise<void> {
     }
 
     const errors: string[] = [];
+    let lastError: unknown;
     const startedAt = Date.now();
 
     await vscode.window.withProgress(
@@ -127,6 +128,7 @@ async function refreshDeCache(): Promise<void> {
                 try {
                     await fetchAndStoreDeCache(projectRoot, credential, bu);
                 } catch (ex) {
+                    lastError = ex;
                     const message = ex instanceof Error ? ex.message : String(ex);
                     errors.push(`${credential}/${bu}: ${message}`);
                 }
@@ -139,7 +141,7 @@ async function refreshDeCache(): Promise<void> {
         getReporter(),
         'sfmc-data.refreshDeCache',
         errors.length === 0 ? 'success' : 'commandFailed',
-        { durationMs, buCount: pickedBus.length }
+        { durationMs, buCount: pickedBus.length, error: lastError }
     );
 
     if (errors.length > 0) {

@@ -87,7 +87,7 @@ This extension collects a small amount of **anonymous** usage telemetry to under
 What is collected:
 
 - **Activation** — that the extension started, plus which known SFMC-related extensions are installed alongside it (booleans only), whether the workspace looks like an mcdev and/or mcdata project (folder-root flags only), and how `mcdata` is resolved (`bundled`, `auto`, or `custom`).
-- **Command outcomes** — whether a Command Palette or context-menu command succeeded or failed (the VS Code command id, duration on success, and a coarse error category on failure). Refresh DE cache is included the same way, with a count of business units processed.
+- **Command outcomes** — whether a Command Palette or context-menu command succeeded or failed (the VS Code command id, duration on success, and a coarse `errorCategory` on failure: `commandFailed`, `spawnError`, or `mcdataPrefixMissing`, plus optional sanitized `errorName` / `errorCode` — never a message, stack, or path). Refresh DE cache is included the same way, with a count of business units processed.
 - **mcdata version** — the version string of the resolved `mcdata` used by the extension (omitted when the lookup fails).
 
 Events are keyed by VS Code's anonymous machine id only. The full catalogue ships as [`telemetry.json`](./telemetry.json) in the extension root.

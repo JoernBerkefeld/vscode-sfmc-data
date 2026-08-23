@@ -1,9 +1,11 @@
+import { sanitizeErrorCode, sanitizeFailureTelemetry } from './errorTelemetry';
 import type { TelemetryValue } from './telemetry';
 
 /**
  * Privacy-safe command outcome used by the dispatcher and refresh-cache handler.
  */
-export type CommandTelemetryOutcome = 'success' | 'commandFailed' | 'spawnError' | 'cancelled';
+export type CommandTelemetryOutcome =
+    'success' | 'commandFailed' | 'spawnError' | 'mcdataPrefixMissing' | 'cancelled';
 
 /**
  * `McdataRunOutcome.status` values from runMcdata — mapped by {@link mapMcdataRunStatus}.
@@ -17,6 +19,8 @@ export interface TelemetrySink {
 export interface CommandTelemetryExtras {
     durationMs?: number;
     buCount?: number;
+    error?: unknown;
+    errorCode?: string | number | null;
 }
 
 /**
@@ -46,7 +50,8 @@ export function mapMcdataRunStatus(status: McdataRunStatus): CommandTelemetryOut
  * @param reporter - Optional sink (no-op when undefined).
  * @param command - VS Code command id (e.g. `sfmc-data.exportDE`).
  * @param outcome - Allowlisted result. Never a raw error string.
- * @param extras - `durationMs` on success only; optional `buCount` for refresh-cache.
+ * @param extras - `durationMs` on success only; optional `buCount` for refresh-cache;
+ *   optional sanitized `error` / `errorCode` on failure.
  */
 export function trackCommandOutcome(
     reporter: TelemetrySink | undefined,
@@ -72,8 +77,12 @@ export function trackCommandOutcome(
 
     const properties: Record<string, TelemetryValue> = {
         command,
-        errorCategory: outcome,
+        ...sanitizeFailureTelemetry(extras?.error, outcome),
     };
+    const explicitCode = sanitizeErrorCode(extras?.errorCode);
+    if (explicitCode) {
+        properties.errorCode = explicitCode;
+    }
     if (extras?.buCount !== undefined) {
         properties.buCount = extras.buCount;
     }

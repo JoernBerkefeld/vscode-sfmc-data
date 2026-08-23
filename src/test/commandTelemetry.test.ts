@@ -61,6 +61,47 @@ describe('trackCommandOutcome', () => {
         ]);
     });
 
+    it('attaches sanitized errorName and errorCode on spawnError', () => {
+        const sink = createSink();
+        const error = {
+            name: 'Error',
+            code: 'ENOENT',
+            message: String.raw`spawn C:\Users\secret\mcdata.exe`,
+        };
+        trackCommandOutcome(sink, 'sfmc-data.exportDE', 'spawnError', { error });
+        assert.deepEqual(sink.events[0].properties, {
+            command: 'sfmc-data.exportDE',
+            errorCategory: 'spawnError',
+            errorName: 'Error',
+            errorCode: 'ENOENT',
+        });
+        assert.equal(Object.hasOwn(sink.events[0].properties, 'message'), false);
+        assert.equal(Object.hasOwn(sink.events[0].properties, 'stack'), false);
+    });
+
+    it('maps mcdataPrefixMissing and attaches a string exit code on commandFailed', () => {
+        const sink = createSink();
+        trackCommandOutcome(sink, 'sfmc-data.exportDE', 'mcdataPrefixMissing');
+        trackCommandOutcome(sink, 'sfmc-data.exportDE', 'commandFailed', { errorCode: 2 });
+        assert.deepEqual(sink.events, [
+            {
+                event: 'command.failed',
+                properties: {
+                    command: 'sfmc-data.exportDE',
+                    errorCategory: 'mcdataPrefixMissing',
+                },
+            },
+            {
+                event: 'command.failed',
+                properties: {
+                    command: 'sfmc-data.exportDE',
+                    errorCategory: 'commandFailed',
+                    errorCode: '2',
+                },
+            },
+        ]);
+    });
+
     it('emits nothing when cancelled', () => {
         const sink = createSink();
         trackCommandOutcome(sink, 'sfmc-data.exportDE', 'cancelled', { durationMs: 10 });

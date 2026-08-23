@@ -16,7 +16,7 @@ export type McdataRunOutcome =
     | { status: 'success' }
     | { status: 'failed'; exitCode: number | null }
     | { status: 'cancelled' }
-    | { status: 'spawn_error'; message: string };
+    | { status: 'spawn_error'; message: string; error?: Error };
 
 /**
  * Runs `mcdata` in a subprocess (no integrated terminal), logs to the extension output channel,
@@ -39,7 +39,7 @@ export async function runMcdataWithProgress(
     const startedAt = Date.now();
     const prefix = resolveMcdataShellPrefix(context, projectRoot);
     if (prefix === undefined) {
-        trackCommandOutcome(getReporter(), options.telemetryCommand, 'spawnError', {
+        trackCommandOutcome(getReporter(), options.telemetryCommand, 'mcdataPrefixMissing', {
             durationMs: Date.now() - startedAt,
         });
         return;
@@ -66,11 +66,19 @@ export async function runMcdataWithProgress(
         }
     );
 
+    const extras: { durationMs: number; error?: Error; errorCode?: number | null } = {
+        durationMs: Date.now() - startedAt,
+    };
+    if (outcome.status === 'failed') {
+        extras.errorCode = outcome.exitCode;
+    } else if (outcome.status === 'spawn_error') {
+        extras.error = outcome.error;
+    }
     trackCommandOutcome(
         getReporter(),
         options.telemetryCommand,
         mapMcdataRunStatus(outcome.status),
-        { durationMs: Date.now() - startedAt }
+        extras
     );
 
     const openDetails = (): void => {
@@ -205,7 +213,7 @@ function executeMcdataShell(
 
         child.on('error', (error: Error) => {
             channel.appendLine(String(error));
-            finish({ status: 'spawn_error', message: error.message });
+            finish({ status: 'spawn_error', message: error.message, error });
         });
 
         child.on('close', (code: number | null) => {

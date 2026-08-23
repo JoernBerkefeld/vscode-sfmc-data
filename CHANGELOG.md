@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] — 2026-08-23
+
+### Changed
+
+- **`command.failed` telemetry** now distinguishes `mcdataPrefixMissing` from `spawnError`, and may include a sanitized `errorName` / `errorCode` (Node spawn code or numeric exit code as a string). Never a raw message, stack, or path.
+
 ## [1.2.0] — 2026-08-22
 
 ### Added
