@@ -21,7 +21,7 @@ interface QueuedEvent {
 const reporterState: { current: TelemetryReporter | undefined } = { current: undefined };
 
 /**
- * Batches anonymous extension telemetry and respects VS Code's global telemetry setting.
+ * Batches pseudonymous extension telemetry and respects VS Code's global telemetry setting.
  */
 export class TelemetryReporter implements vscode.Disposable {
     private readonly commonProperties: Record<string, TelemetryValue>;
@@ -187,6 +187,10 @@ export class TelemetryReporter implements vscode.Disposable {
 }
 
 const NEIGHBOR_ALLOWLIST: Record<string, string> = {
+    'neighbor.xnerd.ampscript-language': 'xnerd.ampscript-language',
+    'neighbor.esbenp.prettier-vscode': 'esbenp.prettier-vscode',
+    'neighbor.dbaeumer.vscode-eslint': 'dbaeumer.vscode-eslint',
+    'neighbor.MarketingThibs.ampscriptsnippets': 'MarketingThibs.ampscriptsnippets',
     'neighbor.sergey-agadzhanov.ampscript': 'sergey-agadzhanov.ampscript',
     'neighbor.FiB.ssjs-vsc': 'FiB.ssjs-vsc',
     'neighbor.FiB.beautyAmp': 'FiB.beautyAmp',

@@ -137,6 +137,77 @@ describe('TelemetryReporter', () => {
         assert.equal(Object.hasOwn(result, 'neighbor.sfmc-data'), false);
     });
 
+    const requestedNeighbors: Record<string, string> = {
+        'neighbor.xnerd.ampscript-language': 'xnerd.ampscript-language',
+        'neighbor.esbenp.prettier-vscode': 'esbenp.prettier-vscode',
+        'neighbor.dbaeumer.vscode-eslint': 'dbaeumer.vscode-eslint',
+        'neighbor.MarketingThibs.ampscriptsnippets': 'MarketingThibs.ampscriptsnippets',
+        'neighbor.markdown-preview-bitbucket-innersource':
+            'joernberkefeld.markdown-preview-bitbucket-innersource',
+    };
+
+    for (const installedIds of [
+        [],
+        Object.values(requestedNeighbors),
+        ...Object.values(requestedNeighbors).map((id) => [id]),
+    ]) {
+        it(`detects inactive requested neighbors exactly: ${installedIds.join(', ') || 'none'}`, () => {
+            const selfId = 'joernberkefeld.sfmc-data';
+            extensions.__installed = [
+                { id: selfId, isActive: false, packageJSON: {} },
+                ...installedIds.map((id) => ({ id, isActive: false, packageJSON: {} })),
+                { id: 'unrelated.private-extension', isActive: false, packageJSON: {} },
+            ];
+            const result = detectEcosystem(selfId);
+            for (const [key, id] of Object.entries(requestedNeighbors)) {
+                assert.equal(result[key], installedIds.includes(id), `${key} maps to ${id}`);
+            }
+            assert.equal(result.coInstalledAsDependency, false);
+            assert.equal(result.coInstalledInPack, false);
+            assert.equal(Object.hasOwn(result, 'neighbor.sfmc-data'), false);
+            assert.equal(
+                Object.values(result).every((value) => typeof value === 'boolean'),
+                true
+            );
+            assert.deepEqual(
+                sortedNames(Object.keys(result)),
+                sortedNames([
+                    ...Object.keys(requestedNeighbors),
+                    'neighbor.sergey-agadzhanov.ampscript',
+                    'neighbor.FiB.ssjs-vsc',
+                    'neighbor.FiB.beautyAmp',
+                    'neighbor.sfmc-language',
+                    'neighbor.sfmc-devtools',
+                    'neighbor.mso-conditionals',
+                    'neighbor.sfmc-extension-pack',
+                    'neighbor.sfmc-extension-pack-plus',
+                    'coInstalledAsDependency',
+                    'coInstalledInPack',
+                ])
+            );
+        });
+    }
+
+    it('preserves dependency and pack detection while excluding self declarations', () => {
+        const selfId = 'joernberkefeld.sfmc-data';
+        extensions.__installed = [
+            {
+                id: selfId,
+                packageJSON: { extensionDependencies: [selfId], extensionPack: [selfId] },
+            },
+        ];
+        assert.equal(detectEcosystem(selfId).coInstalledAsDependency, false);
+        assert.equal(detectEcosystem(selfId).coInstalledInPack, false);
+        extensions.__installed.push({
+            id: 'unrelated.pack',
+            packageJSON: { extensionDependencies: [selfId], extensionPack: [selfId] },
+        });
+        const result = detectEcosystem(selfId);
+        assert.equal(result.coInstalledAsDependency, true);
+        assert.equal(result.coInstalledInPack, true);
+        assert.equal(Object.hasOwn(result, 'neighbor.unrelated.pack'), false);
+    });
+
     it('telemetry catalog matches runtime event properties and measures', async () => {
         const fetchStub = stubFetch();
         try {

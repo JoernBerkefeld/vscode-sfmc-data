@@ -37,6 +37,7 @@ export const env = {
 
 export interface MockExtension {
     id: string;
+    isActive?: boolean;
     packageJSON: { extensionDependencies?: string[]; extensionPack?: string[] };
 }
 

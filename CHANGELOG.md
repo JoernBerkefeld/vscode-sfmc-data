@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] — 2026-09-09
+
+### Changed
+
+- Activation telemetry adds presence-only booleans for `xnerd.ampscript-language`, `esbenp.prettier-vscode`, `dbaeumer.vscode-eslint`, and `MarketingThibs.ampscriptsnippets`, while preserving the existing Markdown Preview signal. Discoverable but inactive extensions count as present; consent and transport are unchanged.
+
 ## [1.2.1] — 2026-08-23
 
 ### Changed
